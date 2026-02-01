@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cast Diversity Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        .search-section {
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            display: none;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .result-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .result-title {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .result-meta {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            color: #333;
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .percentage-bar {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 30px;
+            margin: 20px 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .percentage-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            transition: width 1s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .cast-list {
+            margin-top: 30px;
+        }
+
+        .cast-list h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .cast-member {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .cast-member img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+            object-fit: cover;
+            background: #ddd;
+        }
+
+        .cast-info {
+            flex: 1;
+        }
+
+        .cast-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .cast-character {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Cast Diversity Analyzer</h1>
+        <p class="subtitle">Analyze the representation of Black/African-American cast members in movies and TV shows</p>
+
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Enter movie or TV show name...">
+                <button id="searchBtn">Search</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing cast information...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="results" id="results">
+            <div class="result-header">
+                <div class="result-title" id="titleName"></div>
+                <div class="result-meta" id="titleMeta"></div>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-label">Total Cast Members</div>
+                    <div class="stat-value" id="totalCast">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Black/African-American</div>
+                    <div class="stat-value" id="blackCast">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Percentage</div>
+                    <div class="stat-value" id="percentage">0%</div>
+                </div>
+            </div>
+
+            <div class="percentage-bar">
+                <div class="percentage-fill" id="percentageFill" style="width: 0%">
+                    <span id="percentageText"></span>
+                </div>
+            </div>
+
+            <div class="cast-list">
+                <h3>Black/African-American Cast Members:</h3>
+                <div id="castMembers"></div>
+            </div>
+
+            <div class="note">
+                <strong>Note:</strong> This analysis is based on publicly available data from TMDb. Ethnicity information may be incomplete or inaccurate. This tool is intended for informational and analytical purposes only.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = ''; // Users will need to add their own TMDb API key
+        const BASE_URL = 'https://api.themoviedb.org/3';
+        const IMG_BASE = 'https://image.tmdb.org/t/p/w200';
+
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const results = document.getElementById('results');
+
+        searchBtn.addEventListener('click', searchTitle);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchTitle();
+        });
+
+        async function searchTitle() {
+            const query = searchInput.value.trim();
+            if (!query) return;
+
+            if (!API_KEY) {
+                showError('Please add your TMDb API key to use this app. Get one free at https://www.themoviedb.org/settings/api');
+                return;
+            }
+
+            showLoading();
+            hideError();
+            hideResults();
+
+            try {
+                // Search for both movies and TV shows
+                const [movieResults, tvResults] = await Promise.all([
+                    fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}`).then(r => r.json()),
+                    fetch(`${BASE_URL}/search/tv?api_key=${API_KEY}&query=${encodeURIComponent(query)}`).then(r => r.json())
+                ]);
+
+                // Get the first result from either category
+                let result, type;
+                if (movieResults.results && movieResults.results.length > 0) {
+                    result = movieResults.results[0];
+                    type = 'movie';
+                } else if (tvResults.results && tvResults.results.length > 0) {
+                    result = tvResults.results[0];
+                    type = 'tv';
+                } else {
+                    showError('No results found. Please try a different search term.');
+                    hideLoading();
+                    return;
+                }
+
+                // Get cast information
+                const creditsUrl = `${BASE_URL}/${type}/${result.id}/credits?api_key=${API_KEY}`;
+                const creditsData = await fetch(creditsUrl).then(r => r.json());
+
+                await analyzeCast(result, creditsData.cast || [], type);
+                hideLoading();
+
+            } catch (err) {
+                showError('An error occurred while fetching data. Please try again.');
+                hideLoading();
+                console.error(err);
+            }
+        }
+
+        async function analyzeCast(title, cast, type) {
+            // For each cast member, fetch their details to get ethnicity information
+            const castWithDetails = await Promise.all(
+                cast.slice(0, 30).map(async (member) => { // Limit to top 30 to avoid rate limits
+                    try {
+                        const personUrl = `${BASE_URL}/person/${member.id}?api_key=${API_KEY}`;
+                        const personData = await fetch(personUrl).then(r => r.json());
+                        return {
+                            ...member,
+                            place_of_birth: personData.place_of_birth,
+                            biography: personData.biography
+                        };
+                    } catch {
+                        return member;
+                    }
+                })
+            );
+
+            // Simple heuristic: check if person is likely Black/African-American
+            // Note: This is a simplified approach. A real implementation would need better data.
+            const blackCastMembers = castWithDetails.filter(member => {
+                const bio = (member.biography || '').toLowerCase();
+                const birthplace = (member.place_of_birth || '').toLowerCase();
+                
+                // Simple keyword matching - this is imperfect but works for demonstration
+                const keywords = ['african american', 'african-american', 'black american', 'afro-american'];
+                const africanCountries = ['nigeria', 'kenya', 'ghana', 'south africa', 'ethiopia', 'uganda'];
+                
+                return keywords.some(kw => bio.includes(kw)) || 
+                       africanCountries.some(country => birthplace.includes(country));
+            });
+
+            const totalCast = castWithDetails.length;
+            const blackCount = blackCastMembers.length;
+            const percentage = totalCast > 0 ? ((blackCount / totalCast) * 100).toFixed(1) : 0;
+
+            // Display results
+            document.getElementById('titleName').textContent = title.title || title.name;
+            document.getElementById('titleMeta').textContent = `${type === 'movie' ? 'Movie' : 'TV Show'} • ${title.release_date || title.first_air_date || 'N/A'}`;
+            document.getElementById('totalCast').textContent = totalCast;
+            document.getElementById('blackCast').textContent = blackCount;
+            document.getElementById('percentage').textContent = `${percentage}%`;
+            
+            const percentageFill = document.getElementById('percentageFill');
+            setTimeout(() => {
+                percentageFill.style.width = `${percentage}%`;
+                percentageFill.querySelector('span').textContent = `${percentage}%`;
+            }, 100);
+
+            // Display cast members
+            const castContainer = document.getElementById('castMembers');
+            castContainer.innerHTML = '';
+            
+            if (blackCastMembers.length === 0) {
+                castContainer.innerHTML = '<p style="color: #666; padding: 20px; text-align: center;">No Black/African-American cast members identified with available data.</p>';
+            } else {
+                blackCastMembers.forEach(member => {
+                    const div = document.createElement('div');
+                    div.className = 'cast-member';
+                    div.innerHTML = `
+                        <img src="${member.profile_path ? IMG_BASE + member.profile_path : 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3C/svg%3E'}" alt="${member.name}">
+                        <div class="cast-info">
+                            <div class="cast-name">${member.name}</div>
+                            <div class="cast-character">${member.character || 'Unknown role'}</div>
+                        </div>
+                    `;
+                    castContainer.appendChild(div);
+                });
+            }
+
+            showResults();
+        }
+
+        function showLoading() {
+            loading.classList.add('active');
+        }
+
+        function hideLoading() {
+            loading.classList.remove('active');
+        }
+
+        function showError(message) {
+            error.textContent = message;
+            error.classList.add('active');
+        }
+
+        function hideError() {
+            error.classList.remove('active');
+        }
+
+        function showResults() {
+            results.classList.add('active');
+        }
+
+        function hideResults() {
+            results.classList.remove('active');
+        }
+
+        // Check for API key on load
+        window.addEventListener('load', () => {
+            if (!API_KEY) {
+                showError('⚠️ To use this app, you need a free TMDb API key. Get one at https://www.themoviedb.org/settings/api and paste it in the JavaScript code where it says API_KEY = \'\'');
+            }
+        });
+    </script>
+</body>
+</html>
