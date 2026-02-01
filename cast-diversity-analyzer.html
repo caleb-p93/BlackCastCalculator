@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cast Diversity Analyzer</title>
+    <title>"Black" Cast Calculator</title>
     <style>
         * {
             margin: 0;
@@ -258,8 +258,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎬 Cast Diversity Analyzer</h1>
-        <p class="subtitle">Analyze the representation of Black/African-American cast members in movies and TV shows</p>
+        <h1>🎬 "Black" Cast Calculator/h1>
+        <p class="subtitle">Analyze the representation of "Black"/African-American cast members in movies and TV shows</p>
 
         <div class="search-section">
             <div class="search-box">
@@ -287,7 +287,7 @@
                     <div class="stat-value" id="totalCast">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Black/African-American</div>
+                    <div class="stat-label">"Black"/African-American</div>
                     <div class="stat-value" id="blackCast">0</div>
                 </div>
                 <div class="stat-card">
@@ -303,7 +303,7 @@
             </div>
 
             <div class="cast-list">
-                <h3>Black/African-American Cast Members:</h3>
+                <h3>"Black"/African-American Cast Members:</h3>
                 <div id="castMembers"></div>
             </div>
 
@@ -314,7 +314,7 @@
     </div>
 
     <script>
-        const API_KEY = ''; // Users will need to add their own TMDb API key
+        const API_KEY = 'b17971cb15a4d237093adeb4a6253719'; 
         const BASE_URL = 'https://api.themoviedb.org/3';
         const IMG_BASE = 'https://image.tmdb.org/t/p/w200';
 
@@ -395,7 +395,7 @@
                 })
             );
 
-            // Simple heuristic: check if person is likely Black/African-American
+            // Simple heuristic: check if person is likely "Black"/African-American
             // Note: This is a simplified approach. A real implementation would need better data.
             const blackCastMembers = castWithDetails.filter(member => {
                 const bio = (member.biography || '').toLowerCase();
