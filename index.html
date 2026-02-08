@@ -451,7 +451,7 @@
         async function analyzeCast(title, cast, type) {
             // For each cast member, fetch their details to get ethnicity information
             const castWithDetails = await Promise.all(
-                cast.slice(0, 30).map(async (member) => { // Limit to top 30 to avoid rate limits
+                cast.slice(0, 15).map(async (member) => { // Limit to top 15 to avoid rate limits
                     try {
                         const personUrl = `${BASE_URL}/person/${member.id}?api_key=${API_KEY}`;
                         const personData = await fetch(personUrl).then(r => r.json());
