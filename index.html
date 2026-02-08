@@ -119,6 +119,38 @@
             100% { transform: rotate(360deg); }
         }
 
+        .search-results {
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .search-results.active {
+            display: block;
+        }
+
+        .result-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .result-item:hover {
+            background: #e9ecef;
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .result-meta {
+            color: #666;
+            font-size: 0.9em;
+        }
+
         .results {
             display: none;
         }
@@ -268,6 +300,11 @@
             </div>
         </div>
 
+        <div class="search-results" id="searchResults">
+            <h3>Select a title:</h3>
+            <div id="resultsList"></div>
+        </div>
+
         <div class="loading" id="loading">
             <div class="spinner"></div>
             <p>Analyzing cast information...</p>
@@ -320,6 +357,8 @@
 
         const searchInput = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
+        const searchResults = document.getElementById('searchResults');
+        const resultsList = document.getElementById('resultsList');
         const loading = document.getElementById('loading');
         const error = document.getElementById('error');
         const results = document.getElementById('results');
@@ -340,6 +379,7 @@
 
             showLoading();
             hideError();
+            hideSearchResults();
             hideResults();
 
             try {
@@ -349,25 +389,56 @@
                     fetch(`${BASE_URL}/search/tv?api_key=${API_KEY}&query=${encodeURIComponent(query)}`).then(r => r.json())
                 ]);
 
-                // Get the first result from either category
-                let result, type;
-                if (movieResults.results && movieResults.results.length > 0) {
-                    result = movieResults.results[0];
-                    type = 'movie';
-                } else if (tvResults.results && tvResults.results.length > 0) {
-                    result = tvResults.results[0];
-                    type = 'tv';
-                } else {
+                const allResults = [];
+                if (movieResults.results) {
+                    movieResults.results.slice(0, 5).forEach(result => allResults.push({ ...result, type: 'movie' }));
+                }
+                if (tvResults.results) {
+                    tvResults.results.slice(0, 5).forEach(result => allResults.push({ ...result, type: 'tv' }));
+                }
+
+                if (allResults.length === 0) {
                     showError('No results found. Please try a different search term.');
                     hideLoading();
                     return;
                 }
 
+                displaySearchResults(allResults);
+                hideLoading();
+
+            } catch (err) {
+                showError('An error occurred while fetching data. Please try again.');
+                hideLoading();
+                console.error(err);
+            }
+        }
+
+        function displaySearchResults(results) {
+            resultsList.innerHTML = '';
+            results.forEach(result => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.innerHTML = `
+                    <div class="result-title">${result.title || result.name}</div>
+                    <div class="result-meta">${result.type === 'movie' ? 'Movie' : 'TV Show'} • ${result.release_date || result.first_air_date || 'N/A'}</div>
+                `;
+                div.addEventListener('click', () => selectTitle(result));
+                resultsList.appendChild(div);
+            });
+            showSearchResults();
+        }
+
+        async function selectTitle(result) {
+            hideSearchResults();
+            showLoading();
+            hideError();
+
+            try {
                 // Get cast information
-                const creditsUrl = `${BASE_URL}/${type}/${result.id}/credits?api_key=${API_KEY}`;
+                const creditsUrl = `${BASE_URL}/${result.type}/${result.id}/credits?api_key=${API_KEY}`;
                 const creditsData = await fetch(creditsUrl).then(r => r.json());
 
-                await analyzeCast(result, creditsData.cast || [], type);
+                await analyzeCast(result, creditsData.cast || [], result.type);
                 hideLoading();
 
             } catch (err) {
@@ -456,6 +527,14 @@
 
         function hideLoading() {
             loading.classList.remove('active');
+        }
+
+        function showSearchResults() {
+            searchResults.classList.add('active');
+        }
+
+        function hideSearchResults() {
+            searchResults.classList.remove('active');
         }
 
         function showError(message) {
